@@ -3,6 +3,7 @@ package com.example.lukas.mobilecomputingapp;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -26,6 +27,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
@@ -93,17 +95,6 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
-
-
-
-
-
-
-
-
-
-
-
 
 
     void run() throws IOException, JSONException {
@@ -191,15 +182,28 @@ public class MainActivity extends AppCompatActivity {
             //Bundle extras = data.getExtras();
             //Bitmap imageBitmap = (Bitmap) extras.get("data");
             //mImageView.setImageBitmap(imageBitmap);
-            mImageView.setImageURI(Uri.parse(mCurrentPhotoPath));
+
 
             try {
-                File f = new File(mCurrentPhotoPath);
 
-                if (f.exists()){
-                    String size = Long.toString(f.length()/1024) + " KB";
+                Bitmap pic = BitmapFactory.decodeFile(mCurrentPhotoPath);
+                pic = Bitmap.createScaledBitmap(pic, 1000, 1000, false);
+                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                pic.compress(Bitmap.CompressFormat.JPEG, 85, bytes);
+
+
+                File f = new File(mCurrentPhotoPath);
+                f.createNewFile();
+                FileOutputStream fo = new FileOutputStream(f);
+                fo.write(bytes.toByteArray());
+                fo.close();
+
+                mImageView.setImageURI(Uri.parse(mCurrentPhotoPath));
+
+                if (f.exists()) {
+                    String size = Long.toString(f.length() / 1024) + " KB";
                     mTextMessage.setText(size);
-                }else{
+                } else {
                     mTextMessage.setText("Tough luck");
                 }
 
