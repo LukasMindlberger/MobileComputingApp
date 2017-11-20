@@ -75,6 +75,11 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 case R.id.navigation_dashboard:
                     mTextMessage.setText("yoyoo");
+
+                    Intent mapsIntent = new Intent(MainActivity.this, locationHistoryActivity.class);
+
+                    startActivity(mapsIntent);
+
                     return true;
                 case R.id.navigation_notifications:
                     mTextMessage.setText(R.string.title_notifications);
