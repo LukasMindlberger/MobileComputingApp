@@ -2,11 +2,15 @@ package com.example.lukas.mobilecomputingapp;
 
 import android.content.Context;
 import android.content.Intent;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import java.util.List;
 
@@ -34,7 +38,12 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
         Sight sight = sightList.get(position);
         holder.name.setText(sight.getName());
         holder.date.setText(sight.getDate());
-        holder.description.setText(sight.getDescription());
+        holder.description.setText(sight.getLocation().toString());
+
+        holder.img.setImageBitmap(sight.getPicture());
+
+        holder.favBtn.setChecked(false);
+
     }
 
     @Override
@@ -43,7 +52,9 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        public TextView name, date, description;
+        private TextView name, date, description;
+        private ImageView img;
+        private ToggleButton favBtn;
 
         public MyViewHolder(View view) {
             super(view);
@@ -53,6 +64,10 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
             name = (TextView) view.findViewById(R.id.sight_name);
             date = (TextView) view.findViewById(R.id.sight_date);
             description = (TextView) view.findViewById(R.id.sight_description);
+
+            img = (ImageView) view.findViewById(R.id.sight_image);
+
+            favBtn = (ToggleButton) view.findViewById(R.id.sight_favBtn);
         }
 
         @Override
