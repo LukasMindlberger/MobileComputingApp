@@ -16,6 +16,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Base64;
 import android.util.JsonWriter;
 import android.util.Log;
@@ -37,8 +38,11 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -70,6 +74,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        //setSupportActionBar(myToolbar);
+
         //mImageView = (ImageView) findViewById(R.id.image);
         //mTextMessage = (TextView) findViewById(R.id.message);
         mBottomNavView = (BottomNavigationView) findViewById(R.id.navigation);
@@ -79,6 +86,8 @@ public class MainActivity extends AppCompatActivity {
 
         //sights.add(new Sight("TestName1", "TestDesc1", "10.10.2011", "/storage/emulated/0/Android/data/com.example.lukas.mobilecomputingapp/files/Pictures/JPEG_20171121_195428_810594566.jpg", new LatLng(49, 49)));
 
+
+        //Collections.reverse(sights);
         sightAdapter = new SightAdapter(sights);
 
         recyclerView = (RecyclerView) findViewById(R.id.sight_list);
@@ -203,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
                         JSONObject sightLocationJSON = responses.getJSONArray("locations").getJSONObject(0).getJSONObject("latLng");
 
                         final String sightName = responses.getString("description");
-                        final LatLng sightLocation = new LatLng(Double.parseDouble(sightLocationJSON.getString("latitude")), Double.parseDouble(sightLocationJSON.getString("longitude")));
+                        final LatLng sightLocation = new LatLng(round(Double.parseDouble(sightLocationJSON.getString("latitude")),2), round(Double.parseDouble(sightLocationJSON.getString("longitude")),2));
 
                         Log.d("SIGHT NAME AND LOCATION", sightName + " @ " + sightLocation.toString());
 
@@ -229,6 +238,10 @@ public class MainActivity extends AppCompatActivity {
                             public void run() {
                                 Toast.makeText(MainActivity.this, "Could not find a matching sight or landmark!",
                                         Toast.LENGTH_LONG).show();
+
+
+                                //TODO give user possibility to enter sight name themselves and take gps coordinates
+
                                 //mTextMessage.setText("Could not find sight!");
                             }
                         });
@@ -329,5 +342,13 @@ public class MainActivity extends AppCompatActivity {
         Uri contentUri = Uri.fromFile(f);
         mediaScanIntent.setData(contentUri);
         this.sendBroadcast(mediaScanIntent);
+    }
+
+    public static double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        BigDecimal bd = new BigDecimal(value);
+        bd = bd.setScale(places, RoundingMode.HALF_UP);
+        return bd.doubleValue();
     }
 }

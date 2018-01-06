@@ -4,12 +4,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import java.util.List;
@@ -44,6 +46,9 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
 
         holder.favBtn.setChecked(false);
 
+        holder.PicPath = sight.getPicturePath();
+        holder.PicName = sight.getName();
+
     }
 
     @Override
@@ -52,6 +57,9 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        private String PicPath;
+        private String PicName;
+
         private TextView name, date, description;
         private ImageView img;
         private ToggleButton favBtn;
@@ -72,7 +80,12 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
 
         @Override
         public void onClick(View v) {
-            //todo
+            Intent singlePicIntent = new Intent(v.getContext(), SinglePictureActivity.class);
+
+            singlePicIntent.putExtra("SightName", PicName);
+            singlePicIntent.putExtra("PictureLocation", PicPath);
+
+            v.getContext().startActivity(singlePicIntent);
         }
     }
 }
