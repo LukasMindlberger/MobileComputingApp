@@ -2,6 +2,7 @@ package com.example.lukas.mobilecomputingapp;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -42,7 +43,8 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
         holder.date.setText(sight.getDate());
         holder.description.setText(sight.getLocation().toString());
 
-        holder.img.setImageBitmap(sight.getPicture());
+        //holder.img.setImageBitmap(sight.getPicture());
+        holder.img.setImageBitmap(BitmapFactory.decodeFile(sight.getPicturePath()));
 
         holder.favBtn.setChecked(false);
 

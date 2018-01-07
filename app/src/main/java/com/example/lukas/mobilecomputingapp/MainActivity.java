@@ -25,7 +25,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.model.LatLng;
+//import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,12 +43,14 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import okhttp3.Call;
@@ -66,8 +73,16 @@ public class MainActivity extends AppCompatActivity {
     private SightAdapter sightAdapter;
 
     String mCurrentPhotoPath;
-    List<Sight> sights = new ArrayList<>();
 
+    ArrayList<Sight> sights = new ArrayList<>();
+
+
+    //TEST ID
+    public String uID = "0001";
+
+    // Write a message to the database
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
+    DatabaseReference locationRef = database.getReference("sights/" + uID);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,7 +110,36 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(sightAdapter);
+
+        locationRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                sights.clear();
+
+                for(DataSnapshot snap: dataSnapshot.getChildren()){
+
+                    //Log.d("SNAP", snap.toString());
+                    Sight s = snap.getValue(Sight.class);
+
+                    if (s != null){
+                        sights.add(s);
+                    }else{
+                        Log.d("Name", "No name...");
+                    }
+                }
+                sightAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                databaseError.toException().printStackTrace();
+                Log.d("EventListenerCanceled", databaseError.toString());
+            }
+        });
+
     }
+
 
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
@@ -113,6 +157,13 @@ public class MainActivity extends AppCompatActivity {
                 case R.id.navigation_map:
                     //mTextMessage.setText("Map");
                     Intent mapsIntent = new Intent(MainActivity.this, locationHistoryActivity.class);
+
+                    Bundle extra = new Bundle();
+                    //extra.putSerializable("sights",sights);
+                    //mapsIntent.putExtra("s", extra);
+
+                    mapsIntent.putExtra("sights", sights);
+
                     startActivity(mapsIntent);
 
                     mBottomNavView.setSelectedItemId(R.id.navigation_home);
@@ -140,7 +191,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     void run() throws IOException, JSONException {
-
 
         InputStream inputStream = new FileInputStream(mCurrentPhotoPath);//You can get an inputStream using any IO API
         byte[] bytes;
@@ -218,14 +268,17 @@ public class MainActivity extends AppCompatActivity {
 
 
                         Sight sight = new Sight(sightName,null,new SimpleDateFormat("dd.MM.yyyy").format(new Date()),mCurrentPhotoPath,sightLocation);
-                        sights.add(sight);
+                        //sights.add(sight);
+
+                        String sightKey = locationRef.push().getKey();
+                        locationRef.child(sightKey).setValue(sight);
 
                         MainActivity.this.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 //mTextMessage.setText(sightName + " @ " + sightLocation.toString());
                                 //System.out.println(myResponse);
-                                sightAdapter.notifyDataSetChanged();
+                                //sightAdapter.notifyDataSetChanged();
                                 Toast.makeText(MainActivity.this, "Success! :)",
                                         Toast.LENGTH_LONG).show();
                             }
@@ -238,7 +291,6 @@ public class MainActivity extends AppCompatActivity {
                             public void run() {
                                 Toast.makeText(MainActivity.this, "Could not find a matching sight or landmark!",
                                         Toast.LENGTH_LONG).show();
-
 
                                 //TODO give user possibility to enter sight name themselves and take gps coordinates
 

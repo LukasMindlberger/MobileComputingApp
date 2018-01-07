@@ -4,13 +4,16 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 
-import com.google.android.gms.maps.model.LatLng;
+import java.io.Serializable;
+
+
+//import com.google.android.gms.maps.model.LatLng;
 
 /**
  * Created by Lukas on 20/11/2017.
  */
 
-public class Sight {
+public class Sight implements Serializable{
 
     private String name;
     private String description;
@@ -18,7 +21,7 @@ public class Sight {
     private LatLng location;
 
     private String picturePath;
-    private Bitmap picture;
+    //private Bitmap picture;
 
     public Sight() {
     }
@@ -29,10 +32,11 @@ public class Sight {
         this.date = date;
         this.picturePath = picturePath;
         this.location = location;
-
+/*
         if (picturePath!=null && !picturePath.isEmpty()){
             this.picture = BitmapFactory.decodeFile(picturePath);
         }
+        */
     }
 
     public String getName() {
@@ -74,7 +78,7 @@ public class Sight {
     public void setLocation(LatLng location) {
         this.location = location;
     }
-
+/*
     public Bitmap getPicture() {
         return picture;
     }
@@ -82,5 +86,5 @@ public class Sight {
     public void setPicture(Bitmap picture) {
         this.picture = picture;
     }
-
+*/
 }

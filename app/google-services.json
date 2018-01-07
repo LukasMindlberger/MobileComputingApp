@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "472493857570",
+    "firebase_url": "https://traveler-182923.firebaseio.com",
+    "project_id": "traveler-182923",
+    "storage_bucket": "traveler-182923.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:472493857570:android:5a52b0d6ce9f3a8e",
+        "android_client_info": {
+          "package_name": "com.example.lukas.mobilecomputingapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "472493857570-2rb2qfoj354e2jj8b77daoge5o7b4tq1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.lukas.mobilecomputingapp",
+            "certificate_hash": "9d1b77ac593066e38edeaf25068a011aeec7e15d"
+          }
+        },
+        {
+          "client_id": "472493857570-ajni106uofr0p32366l0all1ok47k9tn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAS02mh-tThuIzwTkzpsrIdZlV904CRyhY"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "472493857570-ajni106uofr0p32366l0all1ok47k9tn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
