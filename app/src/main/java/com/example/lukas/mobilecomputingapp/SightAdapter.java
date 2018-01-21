@@ -15,6 +15,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -40,8 +43,16 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
     public void onBindViewHolder(MyViewHolder holder, int position) {
         Sight sight = sightList.get(position);
         holder.name.setText(sight.getName());
-        holder.date.setText(sight.getDate());
         holder.description.setText(sight.getLocation().toString());
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+        try {
+            Date d = sdf.parse(sight.getDateString());
+            holder.date.setText(new SimpleDateFormat("dd.MM.yyyy HH:mm").format(d));
+        } catch (ParseException e) {
+            e.printStackTrace();
+            holder.date.setText(sight.getDateString());
+        }
 
         //holder.img.setImageBitmap(sight.getPicture());
         holder.img.setImageBitmap(BitmapFactory.decodeFile(sight.getPicturePath()));
@@ -51,6 +62,7 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
         holder.PicPath = sight.getPicturePath();
         holder.PicName = sight.getName();
 
+        holder.sight = sight;
     }
 
     @Override
@@ -61,6 +73,8 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
     public class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         private String PicPath;
         private String PicName;
+
+        private Sight sight;
 
         private TextView name, date, description;
         private ImageView img;
@@ -84,8 +98,10 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
         public void onClick(View v) {
             Intent singlePicIntent = new Intent(v.getContext(), SinglePictureActivity.class);
 
-            singlePicIntent.putExtra("SightName", PicName);
-            singlePicIntent.putExtra("PictureLocation", PicPath);
+            //singlePicIntent.putExtra("SightName", PicName);
+            //singlePicIntent.putExtra("PictureLocation", PicPath);
+
+            singlePicIntent.putExtra("Sight", sight);
 
             v.getContext().startActivity(singlePicIntent);
         }

@@ -2,6 +2,15 @@ package com.example.lukas.mobilecomputingapp;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -17,12 +26,15 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 
 public class locationHistoryActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnInfoWindowClickListener {
@@ -60,6 +72,55 @@ public class locationHistoryActivity extends FragmentActivity implements OnMapRe
     }
 
 
+    public static Bitmap getRoundedCornerBitmap(Bitmap bitmap, int pixels) {
+        Bitmap output = Bitmap.createBitmap(bitmap.getWidth(), bitmap
+                .getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+
+        final int color = 0xff424242;
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        final RectF rectF = new RectF(rect);
+        final float roundPx = pixels;
+
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        paint.setColor(color);
+        canvas.drawRoundRect(rectF, roundPx, roundPx, paint);
+
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, rect, rect, paint);
+
+        return output;
+    }
+
+    private Bitmap decodeFile(String imgPath)
+    {
+        Bitmap b = null;
+        int max_size = 450;
+        File f = new File(imgPath);
+        try {
+            BitmapFactory.Options o = new BitmapFactory.Options();
+            o.inJustDecodeBounds = true;
+            FileInputStream fis = new FileInputStream(f);
+            BitmapFactory.decodeStream(fis, null, o);
+            fis.close();
+            int scale = 1;
+            if (o.outHeight > max_size || o.outWidth > max_size)
+            {
+                scale = (int) Math.pow(2, (int) Math.ceil(Math.log(max_size / (double) Math.max(o.outHeight, o.outWidth)) / Math.log(0.5)));
+            }
+            BitmapFactory.Options o2 = new BitmapFactory.Options();
+            o2.inSampleSize = scale;
+            fis = new FileInputStream(f);
+            b = BitmapFactory.decodeStream(fis,new Rect(50,50,50,50), o2);
+            fis.close();
+        }
+        catch (Exception e)
+        {
+        }
+        return b;
+    }
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -74,9 +135,29 @@ public class locationHistoryActivity extends FragmentActivity implements OnMapRe
         mMap = googleMap;
 
         for(Sight sight: sights){
+
+
+
+            Bitmap.Config conf = Bitmap.Config.ARGB_8888;
+            Bitmap bmp = Bitmap.createBitmap(400, 400, conf);
+            Canvas canvas1 = new Canvas(bmp);
+
+            // paint defines the text color, stroke width and size
+            Paint color = new Paint();
+            color.setTextSize(40);
+            color.setColor(Color.BLACK);
+
+            // modify canvas
+            canvas1.drawBitmap(getRoundedCornerBitmap(decodeFile(sight.getPicturePath()),400), 0,0, color);
+            canvas1.drawText(sight.getName(),10,300,color);
+
+
+
             mMap.addMarker(new MarkerOptions()
                 .position(new com.google.android.gms.maps.model.LatLng(sight.getLocation().getLatitude(),sight.getLocation().getLongitude()))
-                .title(sight.getName()));
+                .title(sight.getName())
+                //.icon(BitmapDescriptorFactory.fromBitmap(bmp))
+                );
         }
 
         mMap.setOnInfoWindowClickListener(this);
@@ -109,7 +190,7 @@ public class locationHistoryActivity extends FragmentActivity implements OnMapRe
                             mLastKnownLocation = task.getResult();
                             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
                                     new LatLng(mLastKnownLocation.getLatitude(),
-                                            mLastKnownLocation.getLongitude()), 3));
+                                            mLastKnownLocation.getLongitude()), 5));
                         } else {
                             Log.d(TAG, "Current location is null. Using defaults.");
                             Log.e(TAG, "Exception: %s", task.getException());
@@ -200,8 +281,10 @@ public class locationHistoryActivity extends FragmentActivity implements OnMapRe
             if (sight.getName().equals(marker.getTitle())){
                 Intent singlePicIntent = new Intent(locationHistoryActivity.this, SinglePictureActivity.class);
 
-                singlePicIntent.putExtra("SightName", sight.getName());
-                singlePicIntent.putExtra("PictureLocation", sight.getPicturePath());
+                //singlePicIntent.putExtra("SightName", sight.getName());
+                //singlePicIntent.putExtra("PictureLocation", sight.getPicturePath());
+
+                singlePicIntent.putExtra("Sight", sight);
 
                 startActivity(singlePicIntent);
             }

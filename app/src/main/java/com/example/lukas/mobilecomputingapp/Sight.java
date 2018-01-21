@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.location.Location;
 
 import java.io.Serializable;
+import java.util.Date;
 
 
 //import com.google.android.gms.maps.model.LatLng;
@@ -15,9 +16,11 @@ import java.io.Serializable;
 
 public class Sight implements Serializable{
 
+    private int id;
+
     private String name;
     private String description;
-    private String date;
+    private String dateString;
     private LatLng location;
 
     private String picturePath;
@@ -26,10 +29,10 @@ public class Sight implements Serializable{
     public Sight() {
     }
 
-    public Sight(String name, String desc, String date, String picturePath, LatLng location) {
+    public Sight(String name, String desc, String dateString, String picturePath, LatLng location) {
         this.name = name;
         this.description = desc;
-        this.date = date;
+        this.dateString = dateString;
         this.picturePath = picturePath;
         this.location = location;
 /*
@@ -55,12 +58,12 @@ public class Sight implements Serializable{
         this.description = description;
     }
 
-    public String getDate() {
-        return date;
+    public String getDateString() {
+        return dateString;
     }
 
-    public void setDate(String date) {
-        this.date = date;
+    public void setDateString(String date) {
+        this.dateString = date;
     }
 
     public String getPicturePath() {
@@ -78,6 +81,15 @@ public class Sight implements Serializable{
     public void setLocation(LatLng location) {
         this.location = location;
     }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
 /*
     public Bitmap getPicture() {
         return picture;

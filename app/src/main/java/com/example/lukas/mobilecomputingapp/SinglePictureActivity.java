@@ -53,14 +53,26 @@ public class SinglePictureActivity extends AppCompatActivity {
 
     private String wikiDescription;
 
+    private Sight sight;
+
+    DatabaseHandler db = new DatabaseHandler(this);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_single_picture);
 
         Bundle b = getIntent().getExtras();
-        picLocation = b.getString("PictureLocation");
-        sightName = b.getString("SightName");
+        sight = (Sight) b.getSerializable("Sight");
+
+        sightName = sight.getName();
+        picLocation = sight.getPicturePath();
+        wikiDescription = sight.getDescription();
+
+
+
+
+
 
         //mBottomNavView = (BottomNavigationView) findViewById(R.id.navigation);
         //BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
@@ -76,9 +88,17 @@ public class SinglePictureActivity extends AppCompatActivity {
 
         mSightImg.setImageBitmap(BitmapFactory.decodeFile(picLocation));
         mTitleText.setText(sightName);
-        mWikiText.setText("NO WIKIPEDIA ENTRIES FOUND");
-        getWikiInfo(sightName);
+        mWikiText.setText("querying wikipiedia...");
 
+        if (wikiDescription==null || wikiDescription.isEmpty()){
+            getWikiInfo(sightName);
+        }else{
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
+                mWikiText.setText(Html.fromHtml(wikiDescription,Html.FROM_HTML_MODE_COMPACT));
+            }else{
+                mWikiText.setText(Html.fromHtml(wikiDescription));
+            }
+        }
     }
 
     private void getWikiInfo(final String sightName){
@@ -136,6 +156,9 @@ public class SinglePictureActivity extends AppCompatActivity {
 
                                             final String title = result.getString("title");
                                             final String intro = result.getString("extract");
+
+                                            sight.setDescription(intro);
+                                            db.updateSight(sight);
 
                                             Log.d("TITLE", title);
                                             Log.d("INTRO", intro);
