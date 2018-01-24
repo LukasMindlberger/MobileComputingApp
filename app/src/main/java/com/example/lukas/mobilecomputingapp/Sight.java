@@ -22,9 +22,8 @@ public class Sight implements Serializable{
     private String description;
     private String dateString;
     private LatLng location;
-
     private String picturePath;
-    //private Bitmap picture;
+    private boolean isFavorite;
 
     public Sight() {
     }
@@ -35,11 +34,7 @@ public class Sight implements Serializable{
         this.dateString = dateString;
         this.picturePath = picturePath;
         this.location = location;
-/*
-        if (picturePath!=null && !picturePath.isEmpty()){
-            this.picture = BitmapFactory.decodeFile(picturePath);
-        }
-        */
+        this.isFavorite = false;
     }
 
     public String getName() {
@@ -90,13 +85,11 @@ public class Sight implements Serializable{
         this.id = id;
     }
 
-/*
-    public Bitmap getPicture() {
-        return picture;
+    public boolean isFavorite() {
+        return isFavorite;
     }
 
-    public void setPicture(Bitmap picture) {
-        this.picture = picture;
+    public void setFavorite(boolean favorite) {
+        isFavorite = favorite;
     }
-*/
 }

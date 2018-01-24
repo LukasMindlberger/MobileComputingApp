@@ -20,7 +20,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     private Context ctx;
 
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     // Contacts table name
     private static final String TABLE_SIGHTS = "sights";
@@ -35,6 +35,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static final String KEY_LAT = "latitude";
     private static final String KEY_LONG = "longitude";
     private static final String KEY_PIC_PATH = "picture_path";
+    private static final String KEY_IS_FAV = "favorite";
 
     private static final String KEY_DATE = "date";
 
@@ -52,7 +53,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 + KEY_DATE_STR + " TEXT,"
                 + KEY_LAT + " DOUBLE,"
                 + KEY_LONG + " DOUBLE,"
-                + KEY_PIC_PATH + " TEXT"
+                + KEY_PIC_PATH + " TEXT,"
+                + KEY_IS_FAV + " INTEGER"
                 + ")";
         db.execSQL(CREATE_CONTACTS_TABLE);
     }
@@ -77,6 +79,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         values.put(KEY_LAT, s.getLocation().getLatitude());
         values.put(KEY_LONG, s.getLocation().getLongitude());
         values.put(KEY_PIC_PATH, s.getPicturePath());
+        values.put(KEY_IS_FAV, s.isFavorite());
 
         // Inserting Row
         db.insert(TABLE_SIGHTS, null, values);
@@ -106,6 +109,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 s.setDateString(cursor.getString(3));
                 s.setLocation(new LatLng(cursor.getDouble(4), cursor.getDouble(5)));
                 s.setPicturePath(cursor.getString(6));
+                s.setFavorite(cursor.getInt(7)>0);
 
                 sightList.add(s);
             } while (cursor.moveToNext());
@@ -134,9 +138,11 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         values.put(KEY_LAT, s.getLocation().getLatitude());
         values.put(KEY_LONG, s.getLocation().getLongitude());
         values.put(KEY_PIC_PATH, s.getPicturePath());
+        values.put(KEY_IS_FAV, s.isFavorite());
 
         int retVal = db.update(TABLE_SIGHTS, values, KEY_ID + " = ?",
                 new String[]{String.valueOf(s.getId())});
+        db.close();
 
         Intent i = new Intent("data_changed");
         ctx.sendBroadcast(i);

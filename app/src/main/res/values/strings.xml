@@ -20,8 +20,9 @@
     </string>
     <string-array name="sortModes">
         <item>Recent</item>
+        <item>Oldest</item>
         <item>Alphabetical</item>
+        <item>Distance</item>
         <item>Favorites</item>
-        <item>Location</item>
     </string-array>
 </resources>

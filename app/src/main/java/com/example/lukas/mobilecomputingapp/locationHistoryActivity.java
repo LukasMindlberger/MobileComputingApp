@@ -43,7 +43,7 @@ public class locationHistoryActivity extends FragmentActivity implements OnMapRe
     private GoogleMap mMap;
 
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
-    private static final int DEFAULT_ZOOM = 15;
+    private static final int DEFAULT_ZOOM = 7;
     private final LatLng mDefaultLocation = new LatLng(48.306940, 14.285830);
     private boolean mLocationPermissionGranted;
 
@@ -55,6 +55,8 @@ public class locationHistoryActivity extends FragmentActivity implements OnMapRe
     private FusedLocationProviderClient mFusedLocationProviderClient;
 
     private ArrayList<Sight> sights;
+
+    private ArrayList<Marker> markers = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +73,74 @@ public class locationHistoryActivity extends FragmentActivity implements OnMapRe
         mapFragment.getMapAsync(this);
     }
 
+    /**
+     * Manipulates the map once available.
+     * This callback is triggered when the map is ready to be used.
+     * This is where we can add markers or lines, add listeners or move the camera. In this case,
+     * we just add a marker near Linz.
+     * If Google Play services is not installed on the device, the user will be prompted to install
+     * it inside the SupportMapFragment. This method will only be triggered once the user has
+     * installed Google Play services and returned to the app.
+     */
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+
+        for(Sight sight: sights){
+
+            Bitmap.Config conf = Bitmap.Config.ARGB_8888;
+            Bitmap bmp = Bitmap.createBitmap(400, 400, conf);
+            Canvas canvas1 = new Canvas(bmp);
+
+            // paint defines the text color, stroke width and size
+            Paint color = new Paint();
+            color.setTextSize(40);
+            color.setColor(Color.BLACK);
+
+            // modify canvas
+            canvas1.drawBitmap(getRoundedCornerBitmap(decodeFile(sight.getPicturePath()),400), 0,0, color);
+            canvas1.drawText(sight.getName(),10,300,color);
+
+
+
+            markers.add(mMap.addMarker(new MarkerOptions()
+                .position(new com.google.android.gms.maps.model.LatLng(sight.getLocation().getLatitude(),sight.getLocation().getLongitude()))
+                .title(sight.getName())
+                //.icon(BitmapDescriptorFactory.fromBitmap(bmp))
+                ));
+        }
+
+        mMap.setOnInfoWindowClickListener(this);
+
+        // Prompt the user for permission.
+        getLocationPermission();
+        // Turn on the My Location layer and the related control on the map.
+        updateLocationUI();
+        // Get the current location of the device and set the position of the map.
+        getDeviceLocation();
+        // Check if we should center on a sight or the current location
+        if (getIntent().hasExtra("center")){
+            com.example.lukas.mobilecomputingapp.LatLng extraLatLng = (com.example.lukas.mobilecomputingapp.LatLng) getIntent().getSerializableExtra("center");
+            LatLng latLng = new LatLng(extraLatLng.getLatitude(),extraLatLng.getLongitude());
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM+3));
+            for (Marker m:markers) {
+                if(m.getPosition().latitude == latLng.latitude && m.getPosition().longitude == latLng.longitude){
+                    m.showInfoWindow();
+                }
+            }
+
+        }else{
+            if(mLastKnownLocation != null){
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                        new LatLng(mLastKnownLocation.getLatitude(),
+                                mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+            }else{
+                mMap.moveCamera(CameraUpdateFactory
+                        .newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
+                mMap.getUiSettings().setMyLocationButtonEnabled(false);
+            }
+        }
+    }
 
     public static Bitmap getRoundedCornerBitmap(Bitmap bitmap, int pixels) {
         Bitmap output = Bitmap.createBitmap(bitmap.getWidth(), bitmap
@@ -118,56 +188,9 @@ public class locationHistoryActivity extends FragmentActivity implements OnMapRe
         }
         catch (Exception e)
         {
+            e.printStackTrace();
         }
         return b;
-    }
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Linz.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-
-        for(Sight sight: sights){
-
-
-
-            Bitmap.Config conf = Bitmap.Config.ARGB_8888;
-            Bitmap bmp = Bitmap.createBitmap(400, 400, conf);
-            Canvas canvas1 = new Canvas(bmp);
-
-            // paint defines the text color, stroke width and size
-            Paint color = new Paint();
-            color.setTextSize(40);
-            color.setColor(Color.BLACK);
-
-            // modify canvas
-            canvas1.drawBitmap(getRoundedCornerBitmap(decodeFile(sight.getPicturePath()),400), 0,0, color);
-            canvas1.drawText(sight.getName(),10,300,color);
-
-
-
-            mMap.addMarker(new MarkerOptions()
-                .position(new com.google.android.gms.maps.model.LatLng(sight.getLocation().getLatitude(),sight.getLocation().getLongitude()))
-                .title(sight.getName())
-                //.icon(BitmapDescriptorFactory.fromBitmap(bmp))
-                );
-        }
-
-        mMap.setOnInfoWindowClickListener(this);
-
-        // Prompt the user for permission.
-        getLocationPermission();
-        // Turn on the My Location layer and the related control on the map.
-        updateLocationUI();
-        // Get the current location of the device and set the position of the map.
-        getDeviceLocation();
     }
 
     /**
@@ -180,31 +203,18 @@ public class locationHistoryActivity extends FragmentActivity implements OnMapRe
          */
         try {
             if (mLocationPermissionGranted) {
-
                 Task<Location> locationResult = mFusedLocationProviderClient.getLastLocation();
                 locationResult.addOnCompleteListener(this, new OnCompleteListener<Location>() {
                     @Override
                     public void onComplete(@NonNull Task<Location> task) {
                         if (task.isSuccessful()) {
-                            // Set the map's camera position to the current location of the device.
                             mLastKnownLocation = task.getResult();
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                                    new LatLng(mLastKnownLocation.getLatitude(),
-                                            mLastKnownLocation.getLongitude()), 5));
                         } else {
                             Log.d(TAG, "Current location is null. Using defaults.");
                             Log.e(TAG, "Exception: %s", task.getException());
-                            mMap.moveCamera(CameraUpdateFactory
-                                    .newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
-                            mMap.getUiSettings().setMyLocationButtonEnabled(false);
                         }
                     }
                 });
-
-            } else {
-                // Add a marker in Linz and move camera there
-                mMap.addMarker(new MarkerOptions().position(mDefaultLocation).title("Linz"));
-                mMap.moveCamera(CameraUpdateFactory.newLatLng(mDefaultLocation));
             }
         } catch (SecurityException e) {
             Log.e("Exception: %s", e.getMessage());
@@ -280,12 +290,7 @@ public class locationHistoryActivity extends FragmentActivity implements OnMapRe
         for(Sight sight: sights){
             if (sight.getName().equals(marker.getTitle())){
                 Intent singlePicIntent = new Intent(locationHistoryActivity.this, SinglePictureActivity.class);
-
-                //singlePicIntent.putExtra("SightName", sight.getName());
-                //singlePicIntent.putExtra("PictureLocation", sight.getPicturePath());
-
                 singlePicIntent.putExtra("Sight", sight);
-
                 startActivity(singlePicIntent);
             }
         }

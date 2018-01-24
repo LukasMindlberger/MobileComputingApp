@@ -3,6 +3,7 @@ package com.example.lukas.mobilecomputingapp;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.design.internal.BottomNavigationItemView;
@@ -12,6 +13,7 @@ import android.os.Bundle;
 import android.text.Html;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -25,6 +27,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import okhttp3.Call;
@@ -69,11 +72,6 @@ public class SinglePictureActivity extends AppCompatActivity {
         picLocation = sight.getPicturePath();
         wikiDescription = sight.getDescription();
 
-
-
-
-
-
         //mBottomNavView = (BottomNavigationView) findViewById(R.id.navigation);
         //BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         //navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
@@ -85,6 +83,35 @@ public class SinglePictureActivity extends AppCompatActivity {
         mMapBtn = (Button) findViewById(R.id.MapBtn);
         mShareBtn = (Button) findViewById(R.id.ShareBtn);
         mSimilarBtn = (Button) findViewById(R.id.SimilarBtn);
+
+        mMapBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ArrayList<Sight> sights = new ArrayList<>();
+                sights.add(sight);
+
+                Intent mapsIntent = new Intent(SinglePictureActivity.this, locationHistoryActivity.class);
+                mapsIntent.putExtra("sights", sights);
+                mapsIntent.putExtra("center",sight.getLocation());
+                startActivity(mapsIntent);
+            }
+        });
+        mShareBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent shareIntent = new Intent();
+                shareIntent.setAction(Intent.ACTION_SEND);
+                shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse(sight.getPicturePath()));
+                shareIntent.setType("image/jpeg");
+                startActivity(Intent.createChooser(shareIntent,"Share pictures with your friends"));
+            }
+        });
+        mSimilarBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
 
         mSightImg.setImageBitmap(BitmapFactory.decodeFile(picLocation));
         mTitleText.setText(sightName);
