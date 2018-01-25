@@ -163,7 +163,6 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setItemViewCacheSize(30);
         recyclerView.setDrawingCacheEnabled(true);
         recyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
-
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(sightAdapter);
 
@@ -187,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
-
+                //Do nothing
             }
         });
 
@@ -346,8 +345,6 @@ public class MainActivity extends AppCompatActivity {
             sightAdapter.notifyDataSetChanged();
         }
     };
-
-
 
     private void detectLandmarksHTTP() {
         try {

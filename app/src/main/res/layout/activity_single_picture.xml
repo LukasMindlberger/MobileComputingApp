@@ -62,7 +62,7 @@
                 android:paddingLeft="16dp"
                 android:paddingRight="16dp"
                 android:text="TextView"
-                app:layout_constraintBottom_toTopOf="@+id/SimilarBtn"
+                app:layout_constraintBottom_toTopOf="@+id/NearbyBtn"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/titleTextView"
@@ -82,7 +82,7 @@
                 app:layout_constraintEnd_toEndOf="parent" />
 
             <Button
-                android:id="@+id/SimilarBtn"
+                android:id="@+id/NearbyBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
@@ -90,7 +90,7 @@
 
                 android:layout_marginStart="8dp"
                 android:background="@android:color/transparent"
-                android:text="Similar"
+                android:text="Nearby"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/ShareBtn"
                 app:layout_constraintStart_toEndOf="@+id/MapBtn" />

@@ -1,12 +1,10 @@
 package com.example.lukas.mobilecomputingapp;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
-import android.support.design.internal.BottomNavigationItemView;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -17,7 +15,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 //import com.google.android.gms.maps.model.LatLng;
 
@@ -26,18 +23,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
-
-import static com.example.lukas.mobilecomputingapp.MainActivity.JSON;
 
 public class SinglePictureActivity extends AppCompatActivity {
 
@@ -49,7 +41,7 @@ public class SinglePictureActivity extends AppCompatActivity {
 
     private Button mShareBtn;
     private Button mMapBtn;
-    private Button mSimilarBtn;
+    private Button mNearbyBtn;
 
     private String picLocation;
     private String sightName;
@@ -82,7 +74,7 @@ public class SinglePictureActivity extends AppCompatActivity {
 
         mMapBtn = (Button) findViewById(R.id.MapBtn);
         mShareBtn = (Button) findViewById(R.id.ShareBtn);
-        mSimilarBtn = (Button) findViewById(R.id.SimilarBtn);
+        mNearbyBtn = (Button) findViewById(R.id.NearbyBtn);
 
         mMapBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -106,10 +98,12 @@ public class SinglePictureActivity extends AppCompatActivity {
                 startActivity(Intent.createChooser(shareIntent,"Share pictures with your friends"));
             }
         });
-        mSimilarBtn.setOnClickListener(new View.OnClickListener() {
+        mNearbyBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                Intent nearbyIntent = new Intent(SinglePictureActivity.this, NearbyResultActivity.class);
+                nearbyIntent.putExtra("location", sight.getLocation());
+                startActivity(nearbyIntent);
             }
         });
 
@@ -118,7 +112,7 @@ public class SinglePictureActivity extends AppCompatActivity {
         mWikiText.setText("querying wikipiedia...");
 
         if (wikiDescription==null || wikiDescription.isEmpty()){
-            getWikiInfo(sightName);
+            queryAndSetWikiInfo(sightName);
         }else{
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
                 mWikiText.setText(Html.fromHtml(wikiDescription,Html.FROM_HTML_MODE_COMPACT));
@@ -128,7 +122,7 @@ public class SinglePictureActivity extends AppCompatActivity {
         }
     }
 
-    private void getWikiInfo(final String sightName){
+    private void queryAndSetWikiInfo(final String sightName){
 
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
@@ -184,11 +178,14 @@ public class SinglePictureActivity extends AppCompatActivity {
                                             final String title = result.getString("title");
                                             final String intro = result.getString("extract");
 
-                                            sight.setDescription(intro);
-                                            db.updateSight(sight);
+                                            //Log.d("TITLE", title);
+                                            //Log.d("INTRO", intro);
 
-                                            Log.d("TITLE", title);
-                                            Log.d("INTRO", intro);
+                                            String wikiUrl = "http://en.wikipedia.org/wiki/" + title;
+                                            final String formattedHTML = intro + "<br><br>" + "<a href=" + wikiUrl+ ">Wikipedia link</href>";
+
+                                            sight.setDescription(formattedHTML);
+                                            db.updateSight(sight);
 
                                             SinglePictureActivity.this.runOnUiThread(new Runnable() {
                                                 @Override
@@ -197,9 +194,9 @@ public class SinglePictureActivity extends AppCompatActivity {
                                                     mTitleText.setText(title);
 
                                                     if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
-                                                        mWikiText.setText(Html.fromHtml(intro,Html.FROM_HTML_MODE_COMPACT));
+                                                        mWikiText.setText(Html.fromHtml(formattedHTML,Html.FROM_HTML_MODE_COMPACT));
                                                     }else{
-                                                        mWikiText.setText(Html.fromHtml(intro));
+                                                        mWikiText.setText(Html.fromHtml(formattedHTML));
                                                     }
                                                 }
                                             });
