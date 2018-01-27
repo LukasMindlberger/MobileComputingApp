@@ -100,6 +100,20 @@ public class NearbyResultActivity extends AppCompatActivity implements OnMapRead
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putSerializable("picPath", camHandler.getmCurrentPhotoPath());
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (camHandler!=null && savedInstanceState.containsKey("picPath")){
+            camHandler.setmCurrentPhotoPath(savedInstanceState.getString("picPath"));
+        }
+    }
+
+    @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
         if (mMap != null) {
             Sight s = (Sight) placeAdapter.getItem(i);
@@ -282,7 +296,7 @@ public class NearbyResultActivity extends AppCompatActivity implements OnMapRead
                 pic = Bitmap.createScaledBitmap(pic, pic.getWidth() / 2, pic.getHeight() / 2, false);
 
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                pic.compress(Bitmap.CompressFormat.JPEG, 80, bytes);
+                pic.compress(Bitmap.CompressFormat.JPEG, MainActivity.IMG_COMPRESSION_FACTOR, bytes);
 
                 Log.d("PHOTO_SIZE", String.valueOf(bytes.size() / 1024));
 

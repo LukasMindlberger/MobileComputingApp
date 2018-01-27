@@ -94,6 +94,20 @@ public class LocationHistoryActivity extends FragmentActivity implements OnMapRe
         mBottomNavView.setSelectedItemId(R.id.navigation_map);
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putSerializable("picPath", camHandler.getmCurrentPhotoPath());
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (camHandler!=null && savedInstanceState.containsKey("picPath")){
+            camHandler.setmCurrentPhotoPath(savedInstanceState.getString("picPath"));
+        }
+    }
+
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -350,7 +364,7 @@ public class LocationHistoryActivity extends FragmentActivity implements OnMapRe
                 pic = Bitmap.createScaledBitmap(pic, pic.getWidth() / 2, pic.getHeight() / 2, false);
 
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                pic.compress(Bitmap.CompressFormat.JPEG, 80, bytes);
+                pic.compress(Bitmap.CompressFormat.JPEG, MainActivity.IMG_COMPRESSION_FACTOR, bytes);
 
                 Log.d("PHOTO_SIZE", String.valueOf(bytes.size() / 1024));
 

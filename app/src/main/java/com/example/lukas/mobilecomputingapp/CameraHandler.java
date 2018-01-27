@@ -6,11 +6,13 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
+import android.util.Log;
 
 import com.example.lukas.mobilecomputingapp.Activites.MainActivity;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -40,7 +42,6 @@ public class CameraHandler {
 
         // Save a file: path for use with ACTION_VIEW intents
         mCurrentPhotoPath = image.getAbsolutePath();
-
         return image;
     }
 

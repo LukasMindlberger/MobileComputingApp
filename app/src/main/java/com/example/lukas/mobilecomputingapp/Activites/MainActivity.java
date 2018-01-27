@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -78,6 +79,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
+    public static final int IMG_COMPRESSION_FACTOR = 95;
     public static final int REQUEST_IMAGE_CAPTURE = 1;
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     public static final SimpleDateFormat FULL_TIME_FORMAT = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
@@ -189,6 +191,8 @@ public class MainActivity extends AppCompatActivity {
 
     protected void onResume() {
         super.onResume();
+        mBottomNavView.setSelectedItemId(R.id.navigation_home);
+        registerReceiver(Updated, new IntentFilter("data_changed"));
         if(getIntent().hasExtra("picPath")){
             camHandler.setmCurrentPhotoPath(getIntent().getStringExtra("picPath"));
             getIntent().removeExtra("picPath");
@@ -196,9 +200,29 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(Updated);
+    }
+
     protected void onRestart() {
         super.onRestart();
         mBottomNavView.setSelectedItemId(R.id.navigation_home);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putSerializable("picPath", camHandler.getmCurrentPhotoPath());
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        mBottomNavView.setSelectedItemId(R.id.navigation_home);
+        if (camHandler!=null && savedInstanceState.containsKey("picPath")){
+            camHandler.setmCurrentPhotoPath(savedInstanceState.getString("picPath"));
+        }
     }
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
@@ -507,10 +531,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         if ((requestCode == CameraHandler.REQUEST_IMAGE_CAPTURE) && (resultCode == RESULT_OK)) {
-            //Bundle extras = data.getExtras();
-            //Bitmap imageBitmap = (Bitmap) extras.get("data");
-            //mImageView.setImageBitmap(imageBitmap);
 
             try {
                 Bitmap pic = BitmapFactory.decodeFile(camHandler.getmCurrentPhotoPath());
@@ -519,7 +541,7 @@ public class MainActivity extends AppCompatActivity {
                 pic = Bitmap.createScaledBitmap(pic, pic.getWidth() / 2, pic.getHeight() / 2, false);
 
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                pic.compress(Bitmap.CompressFormat.JPEG, 80, bytes);
+                pic.compress(Bitmap.CompressFormat.JPEG, IMG_COMPRESSION_FACTOR, bytes);
 
                 Log.d("PHOTO_SIZE", String.valueOf(bytes.size() / 1024));
 
