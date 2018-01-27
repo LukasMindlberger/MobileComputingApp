@@ -3,14 +3,14 @@ package com.example.lukas.mobilecomputingapp;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SearchRecentSuggestionsProvider;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
+
+import com.example.lukas.mobilecomputingapp.Models.LatLng;
+import com.example.lukas.mobilecomputingapp.Models.Sight;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Lukas on 21/01/2018.
@@ -20,7 +20,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     private Context ctx;
 
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     // Contacts table name
     private static final String TABLE_SIGHTS = "sights";
@@ -36,8 +36,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static final String KEY_LONG = "longitude";
     private static final String KEY_PIC_PATH = "picture_path";
     private static final String KEY_IS_FAV = "favorite";
-
-    private static final String KEY_DATE = "date";
+    private static final String KEY_WIKI_URL = "wiki_url";
 
     public DatabaseHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -54,7 +53,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 + KEY_LAT + " DOUBLE,"
                 + KEY_LONG + " DOUBLE,"
                 + KEY_PIC_PATH + " TEXT,"
-                + KEY_IS_FAV + " INTEGER"
+                + KEY_IS_FAV + " INTEGER,"
+                + KEY_WIKI_URL + " TEXT"
                 + ")";
         db.execSQL(CREATE_CONTACTS_TABLE);
     }
@@ -80,6 +80,9 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         values.put(KEY_LONG, s.getLocation().getLongitude());
         values.put(KEY_PIC_PATH, s.getPicturePath());
         values.put(KEY_IS_FAV, s.isFavorite());
+        if(s.getWikiUrl()!=null){
+            values.put(KEY_WIKI_URL, s.getWikiUrl());
+        }
 
         // Inserting Row
         db.insert(TABLE_SIGHTS, null, values);
@@ -110,6 +113,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 s.setLocation(new LatLng(cursor.getDouble(4), cursor.getDouble(5)));
                 s.setPicturePath(cursor.getString(6));
                 s.setFavorite(cursor.getInt(7)>0);
+                s.setWikiUrl(cursor.getString(8));
 
                 sightList.add(s);
             } while (cursor.moveToNext());
@@ -139,6 +143,9 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         values.put(KEY_LONG, s.getLocation().getLongitude());
         values.put(KEY_PIC_PATH, s.getPicturePath());
         values.put(KEY_IS_FAV, s.isFavorite());
+        if(s.getWikiUrl()!=null){
+            values.put(KEY_WIKI_URL, s.getWikiUrl());
+        }
 
         int retVal = db.update(TABLE_SIGHTS, values, KEY_ID + " = ?",
                 new String[]{String.valueOf(s.getId())});

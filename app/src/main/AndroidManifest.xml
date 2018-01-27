@@ -31,7 +31,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name=".Activites.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -62,10 +62,10 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".locationHistoryActivity"
+            android:name=".Activites.LocationHistoryActivity"
             android:label="@string/title_activity_location_history" />
-        <activity android:name=".SinglePictureActivity" />
-        <activity android:name=".NearbyResultActivity"></activity>
+        <activity android:name=".Activites.SinglePictureActivity" />
+        <activity android:name=".Activites.NearbyResultActivity"></activity>
     </application>
 
 </manifest>

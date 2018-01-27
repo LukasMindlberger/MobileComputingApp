@@ -1,11 +1,6 @@
-package com.example.lukas.mobilecomputingapp;
-
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.location.Location;
+package com.example.lukas.mobilecomputingapp.Models;
 
 import java.io.Serializable;
-import java.util.Date;
 
 
 //import com.google.android.gms.maps.model.LatLng;
@@ -24,9 +19,8 @@ public class Sight implements Serializable{
     private LatLng location;
     private String picturePath;
     private boolean isFavorite;
-
-    public Sight() {
-    }
+    private String wikiUrl;
+    private String address;
 
     public Sight(String name, String desc, String dateString, String picturePath, LatLng location) {
         this.name = name;
@@ -35,6 +29,10 @@ public class Sight implements Serializable{
         this.picturePath = picturePath;
         this.location = location;
         this.isFavorite = false;
+    }
+
+    public Sight() {
+
     }
 
     public String getName() {
@@ -91,5 +89,21 @@ public class Sight implements Serializable{
 
     public void setFavorite(boolean favorite) {
         isFavorite = favorite;
+    }
+
+    public String getWikiUrl() {
+        return wikiUrl;
+    }
+
+    public void setWikiUrl(String wikiUrl) {
+        this.wikiUrl = wikiUrl;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 }

@@ -1,4 +1,4 @@
-package com.example.lukas.mobilecomputingapp;
+package com.example.lukas.mobilecomputingapp.Activites;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -12,35 +12,47 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.location.Location;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
-import android.widget.Toast;
+import android.view.MenuItem;
 
+import com.example.lukas.mobilecomputingapp.CameraHandler;
+import com.example.lukas.mobilecomputingapp.Models.Sight;
+import com.example.lukas.mobilecomputingapp.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 
-public class locationHistoryActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnInfoWindowClickListener {
+public class LocationHistoryActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnInfoWindowClickListener {
 
-    private static final String TAG = locationHistoryActivity.class.getSimpleName();
+    private static final String TAG = LocationHistoryActivity.class.getSimpleName();
     private GoogleMap mMap;
+
+    private CameraHandler camHandler = new CameraHandler(this);
+    private BottomNavigationView mBottomNavView;
 
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private static final int DEFAULT_ZOOM = 7;
@@ -63,6 +75,10 @@ public class locationHistoryActivity extends FragmentActivity implements OnMapRe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_location_history);
 
+        mBottomNavView = (BottomNavigationView) findViewById(R.id.navigation);
+        mBottomNavView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+        mBottomNavView.setSelectedItemId(R.id.navigation_map);
+
         sights = (ArrayList<Sight>) getIntent().getSerializableExtra("sights");
 
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -71,6 +87,11 @@ public class locationHistoryActivity extends FragmentActivity implements OnMapRe
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+    }
+
+    protected void onResume() {
+        super.onResume();
+        mBottomNavView.setSelectedItemId(R.id.navigation_map);
     }
 
     /**
@@ -101,8 +122,6 @@ public class locationHistoryActivity extends FragmentActivity implements OnMapRe
             canvas1.drawBitmap(getRoundedCornerBitmap(decodeFile(sight.getPicturePath()),400), 0,0, color);
             canvas1.drawText(sight.getName(),10,300,color);
 
-
-
             markers.add(mMap.addMarker(new MarkerOptions()
                 .position(new com.google.android.gms.maps.model.LatLng(sight.getLocation().getLatitude(),sight.getLocation().getLongitude()))
                 .title(sight.getName())
@@ -120,7 +139,7 @@ public class locationHistoryActivity extends FragmentActivity implements OnMapRe
         getDeviceLocation();
         // Check if we should center on a sight or the current location
         if (getIntent().hasExtra("center")){
-            com.example.lukas.mobilecomputingapp.LatLng extraLatLng = (com.example.lukas.mobilecomputingapp.LatLng) getIntent().getSerializableExtra("center");
+            com.example.lukas.mobilecomputingapp.Models.LatLng extraLatLng = (com.example.lukas.mobilecomputingapp.Models.LatLng) getIntent().getSerializableExtra("center");
             LatLng latLng = new LatLng(extraLatLng.getLatitude(),extraLatLng.getLongitude());
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM+3));
             for (Marker m:markers) {
@@ -128,6 +147,7 @@ public class locationHistoryActivity extends FragmentActivity implements OnMapRe
                     m.showInfoWindow();
                 }
             }
+            getIntent().removeExtra("center");
 
         }else{
             if(mLastKnownLocation != null){
@@ -289,10 +309,92 @@ public class locationHistoryActivity extends FragmentActivity implements OnMapRe
     public void onInfoWindowClick(Marker marker) {
         for(Sight sight: sights){
             if (sight.getName().equals(marker.getTitle())){
-                Intent singlePicIntent = new Intent(locationHistoryActivity.this, SinglePictureActivity.class);
+                Intent singlePicIntent = new Intent(LocationHistoryActivity.this, SinglePictureActivity.class);
                 singlePicIntent.putExtra("Sight", sight);
                 startActivity(singlePicIntent);
             }
         }
     }
+
+    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
+            = new BottomNavigationView.OnNavigationItemSelectedListener() {
+
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.navigation_cam:
+                    dispatchTakePictureIntent();
+                    camHandler.galleryAddPic();
+                    return true;
+
+                case R.id.navigation_map:
+                    //Do nothing, we're already on the map
+                    return true;
+
+                case R.id.navigation_home:
+                    startActivity(new Intent(LocationHistoryActivity.this,MainActivity.class));
+                    return true;
+            }
+            return false;
+        }
+    };
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if ((requestCode == CameraHandler.REQUEST_IMAGE_CAPTURE) && (resultCode == RESULT_OK)) {
+
+            try {
+                Bitmap pic = BitmapFactory.decodeFile(camHandler.getmCurrentPhotoPath());
+
+                pic = Bitmap.createBitmap(pic);
+                pic = Bitmap.createScaledBitmap(pic, pic.getWidth() / 2, pic.getHeight() / 2, false);
+
+                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                pic.compress(Bitmap.CompressFormat.JPEG, 80, bytes);
+
+                Log.d("PHOTO_SIZE", String.valueOf(bytes.size() / 1024));
+
+                FileOutputStream fo = new FileOutputStream(new File(camHandler.getmCurrentPhotoPath()));
+                fo.write(bytes.toByteArray());
+                fo.close();
+
+                Intent mainIntent = new Intent(this, MainActivity.class);
+                mainIntent.putExtra("picPath", camHandler.getmCurrentPhotoPath());
+                startActivity(mainIntent);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = camHandler.createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+                ex.printStackTrace();
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.example.android.fileprovider",
+                        photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, CameraHandler.REQUEST_IMAGE_CAPTURE);
+            }
+        }
+    }
+
+
+
+
+
+
+
 }

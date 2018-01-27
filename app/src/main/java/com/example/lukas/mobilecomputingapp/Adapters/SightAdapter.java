@@ -1,23 +1,22 @@
-package com.example.lukas.mobilecomputingapp;
+package com.example.lukas.mobilecomputingapp.Adapters;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.location.Geocoder;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.example.lukas.mobilecomputingapp.Activites.MainActivity;
+import com.example.lukas.mobilecomputingapp.R;
+import com.example.lukas.mobilecomputingapp.Models.Sight;
+import com.example.lukas.mobilecomputingapp.Activites.SinglePictureActivity;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -112,7 +111,7 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
         private ImageView img;
         private ToggleButton favBtn;
 
-        private Button mapBtn, shareBtn;
+        private Button mapBtn, shareBtn, nearbyBtn;
 
         public MyViewHolder(View view) {
             super(view);
@@ -124,6 +123,7 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
 
             mapBtn = (Button) view.findViewById(R.id.sight_mapBtn);
             shareBtn = (Button) view.findViewById(R.id.sight_shareBtn);
+            nearbyBtn = (Button) view.findViewById(R.id.sight_nearbyBtn);
 
             favBtn = (ToggleButton) view.findViewById(R.id.sight_favBtn);
 
@@ -148,6 +148,13 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
                 }
             });
 
+            nearbyBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    onClickListener.nearbyBtnOnClick(view, getAdapterPosition());
+                }
+            });
+
         }
 
         @Override
@@ -164,6 +171,8 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
         void mapBtnOnClick(View v, int position);
 
         void shareBtnOnClick(View v, int position);
+
+        void nearbyBtnOnClick(View v, int position);
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.example.lukas.mobilecomputingapp;
+package com.example.lukas.mobilecomputingapp.Models;
 
 import java.io.Serializable;
 

@@ -1,4 +1,4 @@
-package com.example.lukas.mobilecomputingapp;
+package com.example.lukas.mobilecomputingapp.Activites;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -6,14 +6,13 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Camera;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.provider.OpenableColumns;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
@@ -27,8 +26,8 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.util.Base64;
-import android.util.JsonWriter;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -40,15 +39,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 //import com.google.android.gms.maps.model.LatLng;
+import com.example.lukas.mobilecomputingapp.Adapters.SightAdapter;
+import com.example.lukas.mobilecomputingapp.CameraHandler;
+import com.example.lukas.mobilecomputingapp.DatabaseHandler;
+import com.example.lukas.mobilecomputingapp.Models.LatLng;
+import com.example.lukas.mobilecomputingapp.Models.Sight;
+import com.example.lukas.mobilecomputingapp.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -57,12 +57,9 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.ParseException;
@@ -71,8 +68,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -95,24 +90,14 @@ public class MainActivity extends AppCompatActivity {
 
     private Toolbar mToolbar;
     private Spinner mSpinner;
-
-    private TextView mTextMessage;
-    private ImageView mImageView;
     private BottomNavigationView mBottomNavView;
 
     private RecyclerView recyclerView;
     private SightAdapter sightAdapter;
 
-    String mCurrentPhotoPath;
-
+    CameraHandler camHandler = new CameraHandler(this);
     ArrayList<Sight> sights = new ArrayList<>();
-
-    // Write a message to the database
-    //FirebaseDatabase database = FirebaseDatabase.getInstance();
-    //DatabaseReference locationRef = database.getReference("sights/" + uID);
-
     DatabaseHandler db = new DatabaseHandler(this);
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
         //mImageView = (ImageView) findViewById(R.id.image);
         //mTextMessage = (TextView) findViewById(R.id.message);
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        mToolbar.setTitle("sightseer");
         mSpinner = (Spinner) findViewById(R.id.spinner);
         mBottomNavView = (BottomNavigationView) findViewById(R.id.navigation);
         mBottomNavView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
@@ -141,9 +127,9 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void mapBtnOnClick(View v, int position) {
-                Intent mapsIntent = new Intent(MainActivity.this, locationHistoryActivity.class);
+                Intent mapsIntent = new Intent(MainActivity.this, LocationHistoryActivity.class);
                 mapsIntent.putExtra("sights", sights);
-                mapsIntent.putExtra("center",sights.get(position).getLocation());
+                mapsIntent.putExtra("center", sights.get(position).getLocation());
                 startActivity(mapsIntent);
             }
 
@@ -153,7 +139,14 @@ public class MainActivity extends AppCompatActivity {
                 shareIntent.setAction(Intent.ACTION_SEND);
                 shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse(sights.get(position).getPicturePath()));
                 shareIntent.setType("image/jpeg");
-                startActivity(Intent.createChooser(shareIntent,"Share pictures with your friends"));
+                startActivity(Intent.createChooser(shareIntent, "Share pictures with your friends"));
+            }
+
+            @Override
+            public void nearbyBtnOnClick(View v, int position) {
+                Intent nearbyIntent = new Intent(MainActivity.this, NearbyResultActivity.class);
+                nearbyIntent.putExtra("sight", sights.get(position));
+                startActivity(nearbyIntent);
             }
         };
 
@@ -174,14 +167,11 @@ public class MainActivity extends AppCompatActivity {
         mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                Toast.makeText(MainActivity.this,
-                        "sort by " + mSpinner.getSelectedItem().toString(),
-                        Toast.LENGTH_LONG).show();
-
                 ArrayList<Sight> s = sortSightsList(mSpinner.getSelectedItem().toString(), sights);
                 sights.clear();
                 sights.addAll(s);
                 sightAdapter.notifyDataSetChanged();
+                recyclerView.smoothScrollToPosition(0);
             }
 
             @Override
@@ -197,6 +187,15 @@ public class MainActivity extends AppCompatActivity {
         getDeviceLocation();
     }
 
+    protected void onResume() {
+        super.onResume();
+        if(getIntent().hasExtra("picPath")){
+            camHandler.setmCurrentPhotoPath(getIntent().getStringExtra("picPath"));
+            getIntent().removeExtra("picPath");
+            detectLandmarksHTTP();
+        }
+    }
+
     protected void onRestart() {
         super.onRestart();
         mBottomNavView.setSelectedItemId(R.id.navigation_home);
@@ -210,13 +209,13 @@ public class MainActivity extends AppCompatActivity {
             switch (item.getItemId()) {
                 case R.id.navigation_cam:
                     dispatchTakePictureIntent();
-                    galleryAddPic();
+                    camHandler.galleryAddPic();
                     mBottomNavView.setSelectedItemId(R.id.navigation_home);
                     return true;
 
                 case R.id.navigation_map:
                     //mTextMessage.setText("Map");
-                    Intent mapsIntent = new Intent(MainActivity.this, locationHistoryActivity.class);
+                    Intent mapsIntent = new Intent(MainActivity.this, LocationHistoryActivity.class);
                     mapsIntent.putExtra("sights", sights);
                     startActivity(mapsIntent);
 
@@ -316,7 +315,7 @@ public class MainActivity extends AppCompatActivity {
                         float distanceToSight1 = mLastKnownLocation.distanceTo(sight1Location);
                         float distanceToSight2 = mLastKnownLocation.distanceTo(sight2Location);
 
-                        return Math.round(distanceToSight1-distanceToSight2);
+                        return Math.round(distanceToSight1 - distanceToSight2);
                     }
                 });
                 break;
@@ -360,7 +359,7 @@ public class MainActivity extends AppCompatActivity {
 
     void run() throws IOException, JSONException {
 
-        InputStream inputStream = new FileInputStream(mCurrentPhotoPath);//You can get an inputStream using any IO API
+        InputStream inputStream = new FileInputStream(camHandler.getmCurrentPhotoPath());//You can get an inputStream using any IO API
         byte[] bytes;
         byte[] buffer = new byte[16384];
         int bytesRead;
@@ -432,7 +431,7 @@ public class MainActivity extends AppCompatActivity {
 
                         Log.d("SIGHT NAME AND LOCATION", sightName + " @ " + sightLocation.toString());
 
-                        Sight sight = new Sight(sightName, null, FULL_TIME_FORMAT.format(new Date()), mCurrentPhotoPath, sightLocation);
+                        Sight sight = new Sight(sightName, null, FULL_TIME_FORMAT.format(new Date()), camHandler.getmCurrentPhotoPath(), sightLocation);
                         //sights.add(sight);
 
                         db.addSight(sight);
@@ -461,52 +460,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if ((requestCode == REQUEST_IMAGE_CAPTURE) && (resultCode == RESULT_OK)) {
-            //Bundle extras = data.getExtras();
-            //Bitmap imageBitmap = (Bitmap) extras.get("data");
-            //mImageView.setImageBitmap(imageBitmap);
-
-            try {
-                Bitmap pic = BitmapFactory.decodeFile(mCurrentPhotoPath);
-
-                pic = Bitmap.createBitmap(pic);
-                pic = Bitmap.createScaledBitmap(pic, pic.getWidth() / 2, pic.getHeight() / 2, false);
-
-                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                pic.compress(Bitmap.CompressFormat.JPEG, 80, bytes);
-
-                Log.d("SIZE", String.valueOf(bytes.size() / 1024));
-
-                File f = new File(mCurrentPhotoPath);
-                f.createNewFile();
-                FileOutputStream fo = new FileOutputStream(f);
-                fo.write(bytes.toByteArray());
-                fo.close();
-
-                Log.d("Path", mCurrentPhotoPath);
-
-                /*
-                mImageView.setImageURI(Uri.parse(mCurrentPhotoPath));
-                if (f.exists()) {
-                    String size = Long.toString(f.length() / 1024) + " KB";
-                    mTextMessage.setText(size);
-                } else {
-                    mTextMessage.setText("Tough luck");
-                }
-                */
-
-                //detectLandmarks(mCurrentPhotoPath, System.out);
-                detectLandmarksHTTP();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
-    }
-
-    private void queryUserForSightNameAndSaveSight(){
+    private void queryUserForSightNameAndSaveSight() {
 
         final AlertDialog.Builder getSightNameBuilder = new AlertDialog.Builder(this);
         getSightNameBuilder.setTitle("Enter the sight's name:");
@@ -521,8 +475,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialogInterface, int i) {
                 //Adding manually entered sight at current position
                 String sightName = input.getText().toString();
-                LatLng sightLocation = new LatLng(mLastKnownLocation.getLatitude(),mLastKnownLocation.getLongitude());
-                Sight sight = new Sight(sightName, null, FULL_TIME_FORMAT.format(new Date()), mCurrentPhotoPath, sightLocation);
+                LatLng sightLocation = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
+                Sight sight = new Sight(sightName, null, FULL_TIME_FORMAT.format(new Date()), camHandler.getmCurrentPhotoPath(), sightLocation);
                 db.addSight(sight);
             }
         });
@@ -551,6 +505,36 @@ public class MainActivity extends AppCompatActivity {
         decideBuilder.show();
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if ((requestCode == CameraHandler.REQUEST_IMAGE_CAPTURE) && (resultCode == RESULT_OK)) {
+            //Bundle extras = data.getExtras();
+            //Bitmap imageBitmap = (Bitmap) extras.get("data");
+            //mImageView.setImageBitmap(imageBitmap);
+
+            try {
+                Bitmap pic = BitmapFactory.decodeFile(camHandler.getmCurrentPhotoPath());
+
+                pic = Bitmap.createBitmap(pic);
+                pic = Bitmap.createScaledBitmap(pic, pic.getWidth() / 2, pic.getHeight() / 2, false);
+
+                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                pic.compress(Bitmap.CompressFormat.JPEG, 80, bytes);
+
+                Log.d("PHOTO_SIZE", String.valueOf(bytes.size() / 1024));
+
+                FileOutputStream fo = new FileOutputStream(new File(camHandler.getmCurrentPhotoPath()));
+                fo.write(bytes.toByteArray());
+                fo.close();
+
+                detectLandmarksHTTP();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         // Ensure that there's a camera activity to handle the intent
@@ -558,7 +542,7 @@ public class MainActivity extends AppCompatActivity {
             // Create the File where the photo should go
             File photoFile = null;
             try {
-                photoFile = createImageFile();
+                photoFile = camHandler.createImageFile();
             } catch (IOException ex) {
                 // Error occurred while creating the File
                 ex.printStackTrace();
@@ -572,31 +556,6 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
             }
         }
-    }
-
-    private File createImageFile() throws IOException {
-        // Create an image file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(
-                imageFileName,  /* prefix */
-                ".jpg",         /* suffix */
-                storageDir      /* directory */
-        );
-
-        // Save a file: path for use with ACTION_VIEW intents
-        mCurrentPhotoPath = image.getAbsolutePath();
-
-        return image;
-    }
-
-    private void galleryAddPic() {
-        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-        File f = new File(mCurrentPhotoPath);
-        Uri contentUri = Uri.fromFile(f);
-        mediaScanIntent.setData(contentUri);
-        this.sendBroadcast(mediaScanIntent);
     }
 
     /**
@@ -654,8 +613,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-
+    public static void setCheckable(BottomNavigationView view, boolean checkable) {
+        final Menu menu = view.getMenu();
+        for(int i = 0; i < menu.size(); i++) {
+            menu.getItem(i).setCheckable(checkable);
+        }
+    }
     public static double round(double value, int places) {
         if (places < 0) throw new IllegalArgumentException();
 

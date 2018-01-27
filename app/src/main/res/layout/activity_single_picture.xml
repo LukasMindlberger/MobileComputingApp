@@ -4,14 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.lukas.mobilecomputingapp.SinglePictureActivity">
+    tools:context="com.example.lukas.mobilecomputingapp.Activites.SinglePictureActivity">
 
 
     <ScrollView
         android:id="@+id/scrollView2"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         app:layout_constraintBottom_toTopOf="@+id/navigation"
@@ -23,7 +22,6 @@
         <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-
 
             <ImageView
                 android:id="@+id/singleImgView"
@@ -55,18 +53,31 @@
                 android:id="@+id/wikiTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
                 android:layout_marginEnd="16dp"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="8dp"
                 android:paddingLeft="16dp"
                 android:paddingRight="16dp"
                 android:text="TextView"
-                app:layout_constraintBottom_toTopOf="@+id/NearbyBtn"
+                app:layout_constraintBottom_toTopOf="@+id/wikiLinkTextView"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/titleTextView"
                 app:layout_constraintVertical_bias="0.25" />
+
+
+            <TextView
+                android:id="@+id/wikiLinkTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toTopOf="@+id/NearbyBtn"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
 
 
             <Button
@@ -107,10 +118,10 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
 
+
         </android.support.constraint.ConstraintLayout>
     </ScrollView>
 
-<!--
     <android.support.design.widget.BottomNavigationView
         android:id="@+id/navigation"
         android:layout_width="match_parent"
@@ -119,6 +130,6 @@
         android:background="?android:attr/windowBackground"
         app:layout_constraintBottom_toBottomOf="parent"
         app:menu="@menu/navigation" />
-        -->
+
 
 </android.support.constraint.ConstraintLayout>
