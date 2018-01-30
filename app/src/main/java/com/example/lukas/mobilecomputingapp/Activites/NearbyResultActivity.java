@@ -17,6 +17,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.example.lukas.mobilecomputingapp.Adapters.PlaceAdapter;
 import com.example.lukas.mobilecomputingapp.CameraHandler;
@@ -45,12 +46,14 @@ import java.util.Comparator;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
 public class NearbyResultActivity extends AppCompatActivity implements OnMapReadyCallback, AdapterView.OnItemClickListener {
     public static final String PLACES_API_KEY = "AIzaSyB7PO0EOXLZu83TyPkbD8rC9HTKBxo4bro";
+    public static final String SYGIC_API_KEY = "cVIf6jukcY1kZErWcCfgeaCHWb8L0Wet8Nfqywv9";
 
     private GoogleMap mMap;
     private ArrayList<Marker> markers = new ArrayList<>();
@@ -71,7 +74,7 @@ public class NearbyResultActivity extends AppCompatActivity implements OnMapRead
 
         mBottomNavView = (BottomNavigationView) findViewById(R.id.navigation);
         mBottomNavView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
-        MainActivity.setCheckable(mBottomNavView,false);
+        MainActivity.setCheckable(mBottomNavView, false);
 
         initialSight = (Sight) getIntent().getSerializableExtra("sight");
         gLatLng = new com.google.android.gms.maps.model.LatLng(initialSight.getLocation().getLatitude(), initialSight.getLocation().getLongitude());
@@ -96,7 +99,7 @@ public class NearbyResultActivity extends AppCompatActivity implements OnMapRead
 
     protected void onResume() {
         super.onResume();
-        MainActivity.setCheckable(mBottomNavView,false);
+        MainActivity.setCheckable(mBottomNavView, false);
     }
 
     @Override
@@ -108,7 +111,7 @@ public class NearbyResultActivity extends AppCompatActivity implements OnMapRead
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        if (camHandler!=null && savedInstanceState.containsKey("picPath")){
+        if (camHandler != null && savedInstanceState.containsKey("picPath")) {
             camHandler.setmCurrentPhotoPath(savedInstanceState.getString("picPath"));
         }
     }
@@ -117,6 +120,15 @@ public class NearbyResultActivity extends AppCompatActivity implements OnMapRead
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
         if (mMap != null) {
             Sight s = (Sight) placeAdapter.getItem(i);
+
+            TextView tvDesc = (TextView) view.findViewById(R.id.placeDescTextView);
+            if (tvDesc.getVisibility() == View.GONE && !tvDesc.getText().equals("")){
+                tvDesc.setVisibility(View.VISIBLE);
+            }else if(tvDesc.getVisibility() == View.VISIBLE){
+                tvDesc.setVisibility(View.GONE);
+            }
+
+
             com.google.android.gms.maps.model.LatLng latLng;
             latLng = new com.google.android.gms.maps.model.LatLng(s.getLocation().getLatitude(), s.getLocation().getLongitude());
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM + 3));
@@ -139,23 +151,35 @@ public class NearbyResultActivity extends AppCompatActivity implements OnMapRead
     }
 
     private void queryAndSetNearbyPOI(LatLng position) {
-
+        /*
         String requestUri = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="
                 + position.getLatitude() + "," + position.getLongitude()
                 + "&radius=7000&types=art_gallery|museum|zoo|church|hindu_temple|mosque|synagogue" +
                 "&key=" + PLACES_API_KEY;
-
-     /*   String requestUri = "https://maps.googleapis.com/maps/api/place/textsearch/json?location="
+        */
+        /*
+        String requestUri = "https://maps.googleapis.com/maps/api/place/textsearch/json?location="
                 + position.getLatitude() + "," + position.getLongitude()
                 + "&query=tourist+attraction" +
                 "&key=AIzaSyB7PO0EOXLZu83TyPkbD8rC9HTKBxo4bro";
-*/
-
+        */
+        //New API - way better than Google Places
+        String requestUri = "https://api.sygictravelapi.com/1.0/en/places/list?" +
+                "area=" + position.getLatitude() + "," + position.getLongitude() + ",7000" +
+                "&levels=poi" +
+                "&categories=sightseeing|discovering|traveling" +
+                "&limit=20";
+        //need to URL encode the pipe character
+        requestUri = requestUri.replace("|", "%7C");
 
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
                 .url(requestUri)
+                .addHeader("x-api-key", SYGIC_API_KEY)
                 .build();
+
+        //LATENCY MEASUREMENT -- START
+        final long startTime = System.nanoTime();
 
         client.newCall(request).enqueue(new Callback() {
             @Override
@@ -172,22 +196,28 @@ public class NearbyResultActivity extends AppCompatActivity implements OnMapRead
                     throw new IOException("Unexpected code " + response);
                 } else {
                     try {
-                        JSONObject resultJSON = new JSONObject(response.body().string());
-                        final JSONArray results = resultJSON.getJSONArray("results");
+                        //LATENCY MEASUREMENT -- END
+                        long elapsedTimeMS = (System.nanoTime() - startTime) / 1000000;
+                        Log.i("LATENCY - NEARBY INFO", String.valueOf(elapsedTimeMS)+ "ms");
+
+                        JSONObject resultJSON = new JSONObject(response.body().string()).getJSONObject("data");
+
+                        final JSONArray results = resultJSON.getJSONArray("places");
                         final ArrayList<Sight> sights = new ArrayList<>();
 
                         for (int i = 0; i < results.length(); i++) {
                             JSONObject placeJSON = results.getJSONObject(i);
                             //Log.i("Name", placeJSON.getString("name"));
-                            double lat = placeJSON.getJSONObject("geometry").getJSONObject("location").getDouble("lat");
-                            double lng = placeJSON.getJSONObject("geometry").getJSONObject("location").getDouble("lng");
+                            double lat = placeJSON.getJSONObject("location").getDouble("lat");
+                            double lng = placeJSON.getJSONObject("location").getDouble("lng");
 
+                            //Todo
                             String picRef = "";
-                            if (placeJSON.has("photos")) {
-                                picRef = placeJSON.getJSONArray("photos").getJSONObject(0).getString("photo_reference");
+                            if (placeJSON.has("thumbnail_url") && placeJSON.getString("thumbnail_url") != null) {
+                                picRef = placeJSON.getString("thumbnail_url");
                             }
-                            Sight s = new Sight(placeJSON.getString("name"), "", "", picRef, new LatLng(lat, lng));
-                            s.setAddress(placeJSON.getString("vicinity"));
+                            Sight s = new Sight(placeJSON.getString("name"), placeJSON.getString("perex"), "", picRef, new LatLng(lat, lng));
+                            s.setAddress(placeJSON.getString("name_suffix"));
                             sights.add(s);
                         }
                         Collections.sort(sights, new Comparator<Sight>() {
@@ -235,7 +265,7 @@ public class NearbyResultActivity extends AppCompatActivity implements OnMapRead
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            MainActivity.setCheckable(mBottomNavView,true);
+            MainActivity.setCheckable(mBottomNavView, true);
             switch (item.getItemId()) {
                 case R.id.navigation_cam:
                     dispatchTakePictureIntent();
@@ -255,7 +285,7 @@ public class NearbyResultActivity extends AppCompatActivity implements OnMapRead
                     return true;
 
                 case R.id.navigation_home:
-                    startActivity(new Intent(NearbyResultActivity.this,MainActivity.class));
+                    startActivity(new Intent(NearbyResultActivity.this, MainActivity.class));
                     return true;
             }
             return false;

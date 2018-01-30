@@ -423,10 +423,12 @@ public class MainActivity extends AppCompatActivity {
         OkHttpClient client = new OkHttpClient();
         RequestBody body = RequestBody.create(JSON, requests.toString());
         Request request = new Request.Builder()
-                //Todo read best practices on API key handling
                 .url("https://vision.googleapis.com/v1/images:annotate?key=AIzaSyDAYYDLWz9Nr9aqVmvZylkFhfUi1dI8a80")
                 .post(body)
                 .build();
+
+        //LATENCY MEASUREMENT -- START
+        final long startTime = System.nanoTime();
 
         client.newCall(request).enqueue(new Callback() {
             @Override
@@ -441,9 +443,12 @@ public class MainActivity extends AppCompatActivity {
                 if (!response.isSuccessful()) {
                     throw new IOException("Unexpected code " + response);
                 } else {
+                    //LATENCY MEASUREMENT -- END
+                    long elapsedTimeMS = (System.nanoTime() - startTime) / 1000000;
+                    Log.i("LATENCY - CLOUD VISION", String.valueOf(elapsedTimeMS)+ "ms");
+
                     // use successful result
                     final String myResponse = response.body().string();
-
                     try {
                         JSONObject result = new JSONObject(myResponse);
 

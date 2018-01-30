@@ -1,5 +1,6 @@
 package com.example.lukas.mobilecomputingapp.Activites;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -9,6 +10,7 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.content.FileProvider;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
@@ -19,6 +21,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 //import com.google.android.gms.maps.model.LatLng;
 
@@ -70,27 +73,39 @@ public class SinglePictureActivity extends AppCompatActivity {
 
         mBottomNavView = (BottomNavigationView) findViewById(R.id.navigation);
         mBottomNavView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
-        MainActivity.setCheckable(mBottomNavView,false);
+        MainActivity.setCheckable(mBottomNavView, false);
 
         ImageView mSightImg = (ImageView) findViewById(R.id.singleImgView);
         mWikiText = (TextView) findViewById(R.id.wikiTextView);
         mWikiUrlText = (TextView) findViewById(R.id.wikiLinkTextView);
         mTitleText = (TextView) findViewById(R.id.titleTextView);
 
-        Button mMapBtn = (Button) findViewById(R.id.MapBtn);
+        Button mDeleteBtn = (Button) findViewById(R.id.DeleteBtn);
         Button mShareBtn = (Button) findViewById(R.id.ShareBtn);
         Button mNearbyBtn = (Button) findViewById(R.id.NearbyBtn);
 
-        mMapBtn.setOnClickListener(new View.OnClickListener() {
+        mDeleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ArrayList<Sight> sights = new ArrayList<>();
-                sights.add(sight);
 
-                Intent mapsIntent = new Intent(SinglePictureActivity.this, LocationHistoryActivity.class);
-                mapsIntent.putExtra("sights", sights);
-                mapsIntent.putExtra("center",sight.getLocation());
-                startActivity(mapsIntent);
+                AlertDialog.Builder decideBuilder = new AlertDialog.Builder(SinglePictureActivity.this);
+                decideBuilder.setTitle("Are you sure?");
+                decideBuilder.setMessage("Do you really want to delete this sight? This cannot be undone...");
+                decideBuilder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        db.deleteSight(sight);
+                        startActivity(new Intent(SinglePictureActivity.this, MainActivity.class));
+                    }
+                });
+                decideBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                    }
+                });
+                decideBuilder.show();
+
             }
         });
         mShareBtn.setOnClickListener(new View.OnClickListener() {
@@ -100,7 +115,7 @@ public class SinglePictureActivity extends AppCompatActivity {
                 shareIntent.setAction(Intent.ACTION_SEND);
                 shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse(sight.getPicturePath()));
                 shareIntent.setType("image/jpeg");
-                startActivity(Intent.createChooser(shareIntent,"Share pictures with your friends"));
+                startActivity(Intent.createChooser(shareIntent, "Share pictures with your friends"));
             }
         });
         mNearbyBtn.setOnClickListener(new View.OnClickListener() {
@@ -114,21 +129,20 @@ public class SinglePictureActivity extends AppCompatActivity {
 
         mSightImg.setImageBitmap(BitmapFactory.decodeFile(picLocation));
         mTitleText.setText(sightName);
-        mWikiText.setText("querying wikipiedia...");
-
-        if (wikiDescription ==null || wikiDescription.isEmpty()){
+        if (wikiDescription == null || wikiDescription.isEmpty()) {
+            mWikiText.setText("querying wikipiedia...");
             queryAndSetWikiInfo(sightName);
-        }else{
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
-                mWikiText.setText(Html.fromHtml(wikiDescription,Html.FROM_HTML_MODE_COMPACT));
-            }else{
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                mWikiText.setText(Html.fromHtml(wikiDescription, Html.FROM_HTML_MODE_COMPACT));
+            } else {
                 mWikiText.setText(Html.fromHtml(wikiDescription));
             }
-            if (wikiUrl !=null && !wikiUrl.isEmpty()){
+            if (wikiUrl != null && !wikiUrl.isEmpty()) {
                 mWikiUrlText.setMovementMethod(LinkMovementMethod.getInstance());
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
-                    mWikiUrlText.setText(Html.fromHtml(wikiUrl,Html.FROM_HTML_MODE_COMPACT));
-                }else{
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    mWikiUrlText.setText(Html.fromHtml(wikiUrl, Html.FROM_HTML_MODE_COMPACT));
+                } else {
                     mWikiUrlText.setText(Html.fromHtml(wikiUrl));
                 }
             }
@@ -137,7 +151,7 @@ public class SinglePictureActivity extends AppCompatActivity {
 
     protected void onResume() {
         super.onResume();
-        MainActivity.setCheckable(mBottomNavView,false);
+        MainActivity.setCheckable(mBottomNavView, false);
     }
 
     @Override
@@ -149,17 +163,20 @@ public class SinglePictureActivity extends AppCompatActivity {
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        if (camHandler!=null && savedInstanceState.containsKey("picPath")){
+        if (camHandler != null && savedInstanceState.containsKey("picPath")) {
             camHandler.setmCurrentPhotoPath(savedInstanceState.getString("picPath"));
         }
     }
 
-    private void queryAndSetWikiInfo(final String sightName){
+    private void queryAndSetWikiInfo(final String sightName) {
 
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
                 .url("https://en.wikipedia.org/w/api.php?format=json&action=query&list=search&srsearch=" + sightName)
                 .build();
+
+        //LATENCY MEASUREMENT -- START
+        final long startTime = System.nanoTime();
 
         client.newCall(request).enqueue(new Callback() {
             @Override
@@ -174,9 +191,13 @@ public class SinglePictureActivity extends AppCompatActivity {
                 if (!response.isSuccessful()) {
                     throw new IOException("Unexpected code " + response);
                 } else {
+
+                    //LATENCY MEASUREMENT -- END
+                    long elapsedTimeMS = (System.nanoTime() - startTime) / 1000000;
+                    Log.i("LATENCY - WIKI SEARCH", String.valueOf(elapsedTimeMS)+ "ms");
+
                     // use successful result
                     final String myResponse = response.body().string();
-
                     try {
                         JSONArray searchResults = new JSONObject(myResponse).getJSONObject("query").getJSONArray("search");
 
@@ -189,6 +210,9 @@ public class SinglePictureActivity extends AppCompatActivity {
                                     .url("https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro&pageids=" + pageID)
                                     .build();
 
+                            //LATENCY MEASUREMENT -- START
+                            final long startTime2 = System.nanoTime();
+
                             client2.newCall(request2).enqueue(new Callback() {
                                 @Override
                                 public void onFailure(Call call, IOException e) {
@@ -198,9 +222,13 @@ public class SinglePictureActivity extends AppCompatActivity {
 
                                 @Override
                                 public void onResponse(Call call, Response response) throws IOException {
-                                    if(!response.isSuccessful()){
+                                    if (!response.isSuccessful()) {
                                         throw new IOException("Unexpected code " + response);
-                                    }else{
+                                    } else {
+                                        //LATENCY MEASUREMENT -- END
+                                        long elapsedTime2MS = (System.nanoTime() - startTime2) / 1000000;
+                                        Log.i("LATENCY - WIKI QUERY", String.valueOf(elapsedTime2MS)+ "ms");
+
                                         final String myResponse2 = response.body().string();
 
                                         try {
@@ -218,11 +246,11 @@ public class SinglePictureActivity extends AppCompatActivity {
                                                 @Override
                                                 public void run() {
                                                     mTitleText.setText(title);
-                                                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
-                                                        mWikiText.setText(Html.fromHtml(intro,Html.FROM_HTML_MODE_COMPACT));
+                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                                        mWikiText.setText(Html.fromHtml(intro, Html.FROM_HTML_MODE_COMPACT));
                                                         mWikiUrlText.setMovementMethod(LinkMovementMethod.getInstance());
-                                                        mWikiUrlText.setText(Html.fromHtml(wikiUrlHtml,Html.FROM_HTML_MODE_COMPACT));
-                                                    }else{
+                                                        mWikiUrlText.setText(Html.fromHtml(wikiUrlHtml, Html.FROM_HTML_MODE_COMPACT));
+                                                    } else {
                                                         mWikiText.setText(Html.fromHtml(intro));
                                                         mWikiUrlText.setMovementMethod(LinkMovementMethod.getInstance());
                                                         mWikiUrlText.setText(Html.fromHtml(wikiUrlHtml));
@@ -237,8 +265,15 @@ public class SinglePictureActivity extends AppCompatActivity {
                                 }
                             });
 
-                        }else{
+                        } else {
                             Log.d("WIKI QUERY", "Nothing found for " + sightName);
+                            SinglePictureActivity.this.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mWikiText.setText("no wikipedia entry found...");
+                                    mWikiUrlText.setVisibility(View.GONE);
+                                }
+                            });
                         }
 
                     } catch (JSONException e) {
@@ -254,7 +289,7 @@ public class SinglePictureActivity extends AppCompatActivity {
 
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            MainActivity.setCheckable(mBottomNavView,true);
+            MainActivity.setCheckable(mBottomNavView, true);
             switch (item.getItemId()) {
                 case R.id.navigation_cam:
                     dispatchTakePictureIntent();
@@ -269,7 +304,7 @@ public class SinglePictureActivity extends AppCompatActivity {
                     return true;
 
                 case R.id.navigation_home:
-                    startActivity(new Intent(SinglePictureActivity.this,MainActivity.class));
+                    startActivity(new Intent(SinglePictureActivity.this, MainActivity.class));
                     return true;
             }
             return false;

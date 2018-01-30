@@ -33,7 +33,7 @@ public class PlaceAdapter extends ArrayAdapter<Sight> {
 
     /*private view holder class*/
     private class ViewHolder {
-        TextView tvName, tvDist, tvAddress;
+        TextView tvName, tvDist, tvAddress, tvDesc;
         ImageView imgSightImg;
     }
 
@@ -52,6 +52,7 @@ public class PlaceAdapter extends ArrayAdapter<Sight> {
             holder.tvName = (TextView) convertView.findViewById(R.id.placeNameTextView);
             holder.tvDist = (TextView) convertView.findViewById(R.id.placeDistTextView);
             holder.tvAddress = (TextView) convertView.findViewById(R.id.placeAddressTextView);
+            holder.tvDesc = (TextView)  convertView.findViewById(R.id.placeDescTextView);
 
             convertView.setTag(holder);
         } else {
@@ -60,6 +61,13 @@ public class PlaceAdapter extends ArrayAdapter<Sight> {
 
         holder.tvName.setText(sight.getName());
         holder.tvAddress.setText(sight.getAddress());
+        if(sight.getDescription()!=null && !sight.getDescription().equals("null")){
+            holder.tvDesc.setText(sight.getDescription());
+        }else{
+            holder.tvDesc.setText("");
+
+        }
+        holder.tvDesc.setVisibility(View.GONE);
 
         Location sightLocation = new Location("Sight1 Location");
         sightLocation.setLatitude(sight.getLocation().getLatitude());
@@ -76,10 +84,10 @@ public class PlaceAdapter extends ArrayAdapter<Sight> {
         if (sight.getPicturePath() != null && !sight.getPicturePath().isEmpty()) {
             //Log.i("PhotoRef", "https://maps.googleapis.com/maps/api/place/photo?maxwidth=100&photoreference=" + sight.getPicturePath() + "&key=" + NearbyResultActivity.PLACES_API_KEY);
             Picasso.with(ctx)
-                    .load("https://maps.googleapis.com/maps/api/place/photo?maxwidth=250&photoreference=" + sight.getPicturePath() +
-                            "&key=" + NearbyResultActivity.PLACES_API_KEY)
+                    .load(sight.getPicturePath())
                     //.fit()
                     //.centerCrop()
+                    .resize(200,200)
                     .into(holder.imgSightImg);
         }
 

@@ -85,12 +85,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:layout_marginEnd="16dp"
+                android:layout_marginStart="16dp"
 
                 android:background="@android:color/transparent"
+                android:drawableTop="@android:drawable/ic_menu_share"
                 android:text="Share"
+                android:textSize="10sp"
+                android:textAllCaps="false"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                app:layout_constraintStart_toStartOf="parent" />
 
             <Button
                 android:id="@+id/NearbyBtn"
@@ -101,22 +104,28 @@
 
                 android:layout_marginStart="8dp"
                 android:background="@android:color/transparent"
+                android:drawableTop="@android:drawable/ic_menu_myplaces"
                 android:text="Nearby"
+                android:textSize="10sp"
+                android:textAllCaps="false"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/ShareBtn"
-                app:layout_constraintStart_toEndOf="@+id/MapBtn" />
+                app:layout_constraintEnd_toStartOf="@+id/DeleteBtn"
+                app:layout_constraintStart_toEndOf="@+id/ShareBtn" />
 
             <Button
-                android:id="@+id/MapBtn"
+                android:id="@+id/DeleteBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:layout_marginStart="16dp"
 
+                android:layout_marginEnd="16dp"
                 android:background="@android:color/transparent"
-                android:text="Map"
+                android:drawableTop="@android:drawable/ic_menu_delete"
+                android:text="Delete"
+                android:textSize="10sp"
+                android:textAllCaps="false"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintEnd_toEndOf="parent" />
 
 
         </android.support.constraint.ConstraintLayout>

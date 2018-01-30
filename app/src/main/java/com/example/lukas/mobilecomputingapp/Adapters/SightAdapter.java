@@ -75,7 +75,12 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
         }
 
         if (addresses.size() > 0) {
-            holder.description.setText(String.format("%s, %s", addresses.get(0).getLocality(), addresses.get(0).getCountryName()));
+            if (addresses.get(0).getLocality() != null) {
+                holder.description.setText(String.format("%s, %s", addresses.get(0).getLocality(), addresses.get(0).getCountryName()));
+            } else {
+                holder.description.setText(String.format("%s", addresses.get(0).getCountryName()));
+            }
+
         } else {
             holder.description.setText(sightList.get(position).getLocation().toString());
         }
@@ -95,15 +100,10 @@ public class SightAdapter extends RecyclerView.Adapter<SightAdapter.MyViewHolder
                 .centerCrop()
                 .into(holder.img);
 
-        holder.PicPath = sightList.get(position).getPicturePath();
-        holder.PicName = sightList.get(position).getName();
-
         holder.favBtn.setChecked(sightList.get(position).isFavorite());
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private String PicPath;
-        private String PicName;
 
         private Sight sight;
 
